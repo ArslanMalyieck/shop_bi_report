@@ -1,0 +1,8 @@
+include MANIFEST.in
+include requirements.txt
+include *.json
+recursive-include shop_bi_report *.css
+recursive-include shop_bi_report *.js
+recursive-include shop_bi_report *.html
+recursive-include shop_bi_report *.json
+recursive-exclude shop_bi_report *.pyc

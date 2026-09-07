@@ -1,0 +1,1 @@
+MIT License - Internal use for Metadaftr client deployments.
