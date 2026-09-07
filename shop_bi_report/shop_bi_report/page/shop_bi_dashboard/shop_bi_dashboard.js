@@ -271,5 +271,19 @@ class ShopBIDashboard {
 
 function flt(v) { return parseFloat(v) || 0; }
 function format_currency(v) {
-	return frappe.format(flt(v), { fieldtype: 'Currency' });
+	try {
+		return frappe.format(flt(v), { fieldtype: 'Currency' });
+	} catch (e) {
+		// frappe v15's Currency formatter can recurse infinitely in some
+		// builds/setups; fall back to a plain Intl format so the dashboard
+		// never breaks on either v15 or v16.
+		var code = (frappe.boot && frappe.boot.sysdefaults && frappe.boot.sysdefaults.currency) || 'SAR';
+		try {
+			return new Intl.NumberFormat(undefined, {
+				style: 'currency', currency: code, minimumFractionDigits: 2, maximumFractionDigits: 2
+			}).format(flt(v));
+		} catch (e2) {
+			return flt(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+		}
+	}
 }
