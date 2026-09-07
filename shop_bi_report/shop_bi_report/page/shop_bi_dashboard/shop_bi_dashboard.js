@@ -270,20 +270,28 @@ class ShopBIDashboard {
 }
 
 function flt(v) { return parseFloat(v) || 0; }
+function is_frappe_v15() {
+	var v = frappe.boot && frappe.boot.versions && frappe.boot.versions.frappe;
+	return v && String(v).indexOf('15.') === 0;
+}
 function format_currency(v) {
+	// v15's Currency formatter can spin forever (infinite loop / stack
+	// overflow) for some values - never call frappe.format on v15.
+	// v16 formats fine; keep frappe.format there, Intl as safety net.
+	if (is_frappe_v15()) return intl_currency(v);
 	try {
 		return frappe.format(flt(v), { fieldtype: 'Currency' });
 	} catch (e) {
-		// frappe v15's Currency formatter can recurse infinitely in some
-		// builds/setups; fall back to a plain Intl format so the dashboard
-		// never breaks on either v15 or v16.
-		var code = (frappe.boot && frappe.boot.sysdefaults && frappe.boot.sysdefaults.currency) || 'SAR';
-		try {
-			return new Intl.NumberFormat(undefined, {
-				style: 'currency', currency: code, minimumFractionDigits: 2, maximumFractionDigits: 2
-			}).format(flt(v));
-		} catch (e2) {
-			return flt(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-		}
+		return intl_currency(v);
+	}
+}
+function intl_currency(v) {
+	var code = (frappe.boot && frappe.boot.sysdefaults && frappe.boot.sysdefaults.currency) || 'SAR';
+	try {
+		return new Intl.NumberFormat(undefined, {
+			style: 'currency', currency: code, minimumFractionDigits: 2, maximumFractionDigits: 2
+		}).format(flt(v));
+	} catch (e2) {
+		return flt(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 	}
 }
